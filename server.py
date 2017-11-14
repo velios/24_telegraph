@@ -1,31 +1,41 @@
 import pickle
 import uuid
 from os.path import isfile
+from argparse import ArgumentParser
 
-from flask import Flask, render_template, request, session, redirect, url_for
+from flask import Flask, render_template, request, session, redirect
 
 
 app = Flask(__name__)
-app.config['DEBUG'] = True
 app.secret_key = 'ei$tiq5(=k&q=6pzm(j0mk8otxvus1+u!y#g-iu1i7a+r7aqt^'
 
 
+def make_cmd_arguments_parser():
+    parser_description = 'Run flask server'
+    parser = ArgumentParser(description=parser_description)
+    parser.add_argument('-d', '--debug_mode',
+                        help='Run in debug mode',
+                        action='store_true')
 
-def write_to_articles_db(dict_data):
-    pickle_filepath = 'data.pickle'
-    if not isfile(pickle_filepath):
-        data_from_pickle = dict_data
-    else:
-        data_from_pickle = load_from_articles_db()
-        data_from_pickle.update(dict_data)
+    return parser
+
+
+def write_to_articles_db(dict_data, pickle_filepath='data.pickle'):
     with open(pickle_filepath, 'wb+') as file_handler:
-        pickle.dump(data_from_pickle, file_handler, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(dict_data, file_handler, pickle.HIGHEST_PROTOCOL)
 
 
-def load_from_articles_db():
-    pickle_filepath = 'data.pickle'
+def load_from_articles_db(pickle_filepath='data.pickle'):
     with open(pickle_filepath, 'rb') as file_handler:
         return pickle.load(file_handler)
+
+
+@app.before_request
+def make_session():
+    session.permanent = True
+    unique_key = str(uuid.uuid4())
+    if not session.get('key'):
+        session['key'] = unique_key
 
 
 @app.route('/', methods = ['POST', 'GET'])
@@ -36,6 +46,7 @@ def form():
             'header': request.form['header'],
             'signature': request.form['signature'],
             'body': request.form['body'],
+            'session': session.get('key')
         }}
         write_to_articles_db(article_data)
         return redirect(
@@ -47,23 +58,26 @@ def form():
 
 @app.route('/<post_key>', methods = ['POST', 'GET'])
 def show_post(post_key):
-    if request.method == 'POST':
-        article_data = {post_key : {
-            'header': request.form['header'],
-            'signature': request.form['signature'],
-            'body': request.form['body'],
-        }}
-        write_to_articles_db(article_data)
-
+    session_key = session.get('key')
     data_from_pickle = load_from_articles_db()
-    return render_template('form.html', article=data_from_pickle.get(post_key))
+    if request.method == 'POST':
+        data_from_pickle = load_from_articles_db()
+        current_post_data = data_from_pickle.get(post_key)
+        current_post_data['header'] = request.form['header']
+        current_post_data['signature'] = request.form['signature']
+        current_post_data['body'] = request.form['body']
+        write_to_articles_db(data_from_pickle)
 
+    if session_key == data_from_pickle.get(post_key)['session']:
+        return render_template('form.html', article=data_from_pickle.get(post_key))
+    else:
+        return render_template('article.html', article=data_from_pickle.get(post_key))
 
-@app.route('/hello')
-def hello():
-    return 'hello'
 
 if __name__ == "__main__":
-    # a = load_from_articles_db()
-    # print(a.get('09e550e4-5d57-4b94-9036-3ea6af84da52'))
+    cmd_args_parser = make_cmd_arguments_parser()
+    cmd_args = cmd_args_parser.parse_args()
+    if cmd_args.debug_mode:
+        app.config['DEBUG'] = True
+
     app.run()
