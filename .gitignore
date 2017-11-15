@@ -3,7 +3,7 @@ Include/
 Lib/
 Scripts/
 .idea/
-*.txt
+*.json
 !requirements.txt
 pip-selfcheck.json
 pyvenv.cfg

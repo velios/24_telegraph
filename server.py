@@ -1,4 +1,4 @@
-import pickle
+import json
 import uuid
 from os.path import isfile
 from argparse import ArgumentParser
@@ -20,14 +20,23 @@ def make_cmd_arguments_parser():
     return parser
 
 
-def write_to_articles_db(dict_data, pickle_filepath='data.pickle'):
-    with open(pickle_filepath, 'wb+') as file_handler:
-        pickle.dump(dict_data, file_handler, pickle.HIGHEST_PROTOCOL)
+def write_to_articles_db(dict_data, filepath='data.json'):
+    articles_data = load_from_articles_db()
+    with open(filepath, mode='w') as file_handler:
+        articles_data.update(dict_data)
+        file_handler.write(json.dumps(articles_data, indent=2))
 
 
-def load_from_articles_db(pickle_filepath='data.pickle'):
-    with open(pickle_filepath, 'rb') as file_handler:
-        return pickle.load(file_handler)
+def load_from_articles_db(filepath='data.json'):
+    articles_data = {}
+    if not isfile(filepath):
+        with open(filepath, mode='w') as file_handler:
+            file_handler.write(json.dumps(articles_data, indent=2))
+    else:
+        with open(filepath) as file_handler:
+            articles_data = json.load(file_handler)
+    return articles_data
+
 
 
 @app.before_request
@@ -69,9 +78,10 @@ def show_post(post_key):
         write_to_articles_db(data_from_pickle)
 
     if session_key == data_from_pickle.get(post_key)['session']:
-        return render_template('form.html', article=data_from_pickle.get(post_key))
+        template4render_url = 'form.html'
     else:
-        return render_template('article.html', article=data_from_pickle.get(post_key))
+        template4render_url = 'article.html'
+    return render_template('article.html', article=data_from_pickle.get(post_key))
 
 
 if __name__ == "__main__":
@@ -81,3 +91,4 @@ if __name__ == "__main__":
         app.config['DEBUG'] = True
 
     app.run()
+
