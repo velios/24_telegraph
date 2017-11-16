@@ -16,15 +16,7 @@ def make_cmd_arguments_parser():
     parser.add_argument('-d', '--debug_mode',
                         help='Run in debug mode',
                         action='store_true')
-
     return parser
-
-
-def write_to_articles_db(dict_data, filepath='data.json'):
-    articles_data = load_from_articles_db()
-    with open(filepath, mode='w') as file_handler:
-        articles_data.update(dict_data)
-        file_handler.write(json.dumps(articles_data, indent=2))
 
 
 def load_from_articles_db(filepath='data.json'):
@@ -37,6 +29,12 @@ def load_from_articles_db(filepath='data.json'):
             articles_data = json.load(file_handler)
     return articles_data
 
+
+def write_to_articles_db(dict_data, filepath='data.json'):
+    articles_data = load_from_articles_db()
+    with open(filepath, mode='w') as file_handler:
+        articles_data.update(dict_data)
+        file_handler.write(json.dumps(articles_data, indent=2))
 
 
 @app.before_request
@@ -51,34 +49,31 @@ def make_session():
 def form():
     if request.method == 'POST':
         unique_key = str(uuid.uuid4())
-        article_data = {unique_key : {
+        article_data = {unique_key: {
             'header': request.form['header'],
             'signature': request.form['signature'],
             'body': request.form['body'],
             'session': session.get('key')
         }}
         write_to_articles_db(article_data)
-        return redirect(
-            '{article_key}'.format(article_key=unique_key)
-        )
-
+        return redirect(unique_key)
     return render_template('form.html')
 
 
 @app.route('/<post_key>', methods = ['POST', 'GET'])
 def show_post(post_key):
     session_key = session.get('key')
-    data_from_pickle = load_from_articles_db()
+    data_from_json = load_from_articles_db()
     if request.method == 'POST':
-        current_post_data = data_from_pickle.get(post_key)
+        current_post_data = data_from_json.get(post_key)
         current_post_data['header'] = request.form['header']
         current_post_data['signature'] = request.form['signature']
         current_post_data['body'] = request.form['body']
-        write_to_articles_db(data_from_pickle)
+        write_to_articles_db(data_from_json)
 
-    article_data = data_from_pickle.get(post_key)
-    template4render_url = 'form.html' if article_data.get('session') == session_key else 'article.html'
-    return render_template(template4render_url, article=article_data)
+    article_data = data_from_json.get(post_key)
+    template4render = 'form.html' if article_data.get('session') == session_key else 'article.html'
+    return render_template(template4render, article=article_data)
 
 
 if __name__ == "__main__":
@@ -86,6 +81,4 @@ if __name__ == "__main__":
     cmd_args = cmd_args_parser.parse_args()
     if cmd_args.debug_mode:
         app.config['DEBUG'] = True
-
     app.run()
-
