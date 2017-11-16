@@ -22,7 +22,7 @@ $ python3 server.py -d
 ##### Link to Heroku server
 This project also exist on [heroku PaaS platform](https://www.heroku.com/)
 
-
+Visit https://intense-headland-82700.herokuapp.com/ to see application in work
 
 
 # Project Goals
