@@ -70,18 +70,15 @@ def show_post(post_key):
     session_key = session.get('key')
     data_from_pickle = load_from_articles_db()
     if request.method == 'POST':
-        data_from_pickle = load_from_articles_db()
         current_post_data = data_from_pickle.get(post_key)
         current_post_data['header'] = request.form['header']
         current_post_data['signature'] = request.form['signature']
         current_post_data['body'] = request.form['body']
         write_to_articles_db(data_from_pickle)
 
-    if session_key == data_from_pickle.get(post_key)['session']:
-        template4render_url = 'form.html'
-    else:
-        template4render_url = 'article.html'
-    return render_template('article.html', article=data_from_pickle.get(post_key))
+    article_data = data_from_pickle.get(post_key)
+    template4render_url = 'form.html' if article_data.get('session') == session_key else 'article.html'
+    return render_template(template4render_url, article=article_data)
 
 
 if __name__ == "__main__":
