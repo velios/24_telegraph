@@ -1,0 +1,3 @@
+from server import initialize_article_json
+
+initialize_article_json()
