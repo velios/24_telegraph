@@ -9,7 +9,7 @@
       <h3>{% if article %}{{ article.signature }}{% endif %}</h3>
     </div>
     <div class="form-group">
-      <p>{% if article %}{{ article.body }}{% endif %}</p>
+      <textarea name="body" class="form-control" rows="10" readonly>{% if article %}{{ article.body }}{% endif %}</textarea>
     </div>
 </div><!-- /.container -->
 {% endblock %}
