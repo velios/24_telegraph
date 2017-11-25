@@ -4,7 +4,7 @@
 [Ss]cripts/
 .idea/
 __pycache__
-*.json
 !requirements.txt
 pip-selfcheck.json
 pyvenv.cfg
+*.json

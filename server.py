@@ -74,7 +74,7 @@ def initialize_article_json(filepath='data.json'):
     if not isfile(filepath):
         with open(filepath, 'w') as file_handler:
             empty_dict = {}
-            file_handler.write(json.dumps(empty_dict))
+            json.dump(empty_dict, file_handler)
 
 
 if __name__ == "__main__":
